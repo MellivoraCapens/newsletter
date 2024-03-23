@@ -101,13 +101,14 @@ export const handleVotes = asyncHandler(
         await post.updateOne({ $pull: { upvotes: { $in: [req.user.id] } } });
       }
 
-      if (!post.upvotes.includes(req.user.id))
+      if (!post.upvotes.includes(req.user.id)) {
         if (post.downvotes.includes(req.user.id)) {
           await post.updateOne({
             $pull: { downvotes: { $in: [req.user.id] } },
           });
         }
-      await post.updateOne({ $push: { upvotes: [req.user.id] } });
+        await post.updateOne({ $push: { upvotes: [req.user.id] } });
+      }
     }
 
     if (req.body.vote === 0) {
@@ -115,11 +116,12 @@ export const handleVotes = asyncHandler(
         await post.updateOne({ $pull: { downvotes: { $in: [req.user.id] } } });
       }
 
-      if (!post.downvotes.includes(req.user.id))
+      if (!post.downvotes.includes(req.user.id)) {
         if (post.upvotes.includes(req.user.id)) {
           await post.updateOne({ $pull: { upvotes: { $in: [req.user.id] } } });
         }
-      await post.updateOne({ $push: { downvotes: [req.user.id] } });
+        await post.updateOne({ $push: { downvotes: [req.user.id] } });
+      }
     }
 
     res.status(200).json({
