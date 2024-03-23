@@ -51,7 +51,7 @@ export const getPost = asyncHandler(
 );
 
 // @desc    show posts by tag
-// @route   GET /newsletter/api/v1/post/get/:tag
+// @route   GET /newsletter/api/v1/post/:tag
 // @access  public
 export const getPostsByTag = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -74,13 +74,19 @@ export const getPostsByTag = asyncHandler(
 // @access  private
 export const deletePost = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
-    const post = await Post.findByIdAndDelete(req.params.id);
+    const post = await Post.findById(req.params.id);
 
     if (!post) {
       return next(
         new ErrorResponse(`Post not found with id of ${req.params.id}`, 404)
       );
     }
+
+    if (!(req.user.id == post.author)) {
+      return next(new ErrorResponse("Not autorized to access this route", 401));
+    }
+
+    await post.deleteOne();
 
     res.status(200).json({
       success: true,

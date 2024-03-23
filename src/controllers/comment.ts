@@ -30,3 +30,61 @@ export const createComment = asyncHandler(
     });
   }
 );
+
+// @desc    delete comment
+// @route   DELETE /newsletter/api/v1/comment/delete/:id
+// @access  private
+export const deleteComment = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const comment = await Comment.findById(req.params.id);
+
+    if (!comment) {
+      return next(
+        new ErrorResponse(`Comment not found with id of ${req.params.id}`, 404)
+      );
+    }
+
+    if (!(req.user.id == comment.author)) {
+      return next(new ErrorResponse("Not autorized to access this route", 401));
+    }
+
+    await comment.deleteOne();
+
+    res.status(200).json({
+      success: true,
+      data: {},
+    });
+  }
+);
+
+// @desc    delete comment by post author
+// @route   PUT /newsletter/api/v1/comment/delete/postauthor/:id
+// @access  private
+export const deleteCommentByPostAuthor = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const comment = await Comment.findById(req.params.id);
+
+    if (!comment) {
+      return next(
+        new ErrorResponse(`Comment not found with id of ${req.params.id}`, 404)
+      );
+    }
+
+    const post = await Post.findById(comment.parentId);
+
+    if (!post) {
+      return next(new ErrorResponse(`Post not found`, 404));
+    }
+
+    if (!(req.user.id == post.author)) {
+      return next(new ErrorResponse("Not autorized to access this route", 401));
+    }
+
+    await comment.updateOne({ comment: "Deleted Comment" });
+
+    res.status(200).json({
+      success: true,
+      data: comment,
+    });
+  }
+);

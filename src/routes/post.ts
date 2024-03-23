@@ -11,9 +11,9 @@ import { protect } from "../middleware/auth";
 const router = Router();
 
 router.get("/get/:id", getPost);
-router.get("/get/:tag", getPostsByTag);
+router.get("/:tag", getPostsByTag);
 router.post("/createpost", protect, createPost);
 router.put("/vote/:id", protect, handleVotes);
-router.delete("/delete/:id", deletePost);
+router.delete("/delete/:id", protect, deletePost);
 
 export default router;
