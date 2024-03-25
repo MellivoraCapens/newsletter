@@ -28,11 +28,12 @@ const PostSchema: Schema = new Schema<IPost>({
     type: [String],
   },
   author: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: Schema.Types.ObjectId,
+    ref: "User",
   },
-  upvotes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-  downvotes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-  comments: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  upvotes: [{ type: Schema.Types.ObjectId, ref: "User" }],
+  downvotes: [{ type: Schema.Types.ObjectId, ref: "User" }],
+  comments: [{ type: Schema.Types.ObjectId, ref: "User" }],
   createdAt: {
     type: Date,
     default: Date.now,

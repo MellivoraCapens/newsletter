@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import Comment from "../models/Comment";
-import Post from "../models/Post";
+import Comment, { IComment } from "../models/Comment";
+import Post, { IPost } from "../models/Post";
 import { asyncHandler } from "../middleware/async";
 import { ErrorResponse } from "../utils/errorResponse";
 
@@ -62,7 +62,9 @@ export const deleteComment = asyncHandler(
 // @access  private
 export const deleteCommentByPostAuthor = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
-    const comment = await Comment.findById(req.params.id);
+    const comment: IComment | any = await Comment.findById(req.params.id)
+      .populate("parentId")
+      .exec();
 
     if (!comment) {
       return next(
@@ -70,13 +72,7 @@ export const deleteCommentByPostAuthor = asyncHandler(
       );
     }
 
-    const post = await Post.findById(comment.parentId);
-
-    if (!post) {
-      return next(new ErrorResponse(`Post not found`, 404));
-    }
-
-    if (!(req.user.id == post.author)) {
+    if (req.user.id != comment.parentId.author) {
       return next(new ErrorResponse("Not autorized to access this route", 401));
     }
 

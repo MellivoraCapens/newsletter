@@ -14,12 +14,14 @@ const CommentSchema: Schema = new Schema<IComment>({
     required: true,
   },
   author: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: Schema.Types.ObjectId,
+    ref: "User",
   },
   parentId: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: Schema.Types.ObjectId,
+    ref: "Post",
   },
-  comments: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  comments: [{ type: Schema.Types.ObjectId, ref: "User" }],
   createdAt: {
     type: Date,
     default: Date.now,

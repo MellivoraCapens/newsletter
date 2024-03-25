@@ -34,8 +34,7 @@ export const createPost = asyncHandler(
 // @access  public
 export const getPost = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
-    const post = await Post.findById(req.params.id);
-    const user = await User.findById(post?.author);
+    const post = await Post.findById(req.params.id).populate("author").exec();
 
     if (!post) {
       return next(
@@ -45,7 +44,7 @@ export const getPost = asyncHandler(
     res.status(200).json({
       success: true,
       data: post,
-      author: user,
+      author: post.author,
     });
   }
 );
@@ -102,13 +101,22 @@ export const handleVotes = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     const post: IPost | any = await Post.findById(req.params.id);
 
+    if (!post) {
+      next(
+        new ErrorResponse(`Post not found with id of ${req.params.id}`, 404)
+      );
+    }
+
+    const includesUpvotes = post.upvotes.includes(req.user.id);
+    const includesDownvotes = post.downvotes.includes(req.user.id);
+
     if (req.body.vote === 1) {
-      if (post.upvotes.includes(req.user.id)) {
+      if (includesUpvotes) {
         await post.updateOne({ $pull: { upvotes: { $in: [req.user.id] } } });
       }
 
-      if (!post.upvotes.includes(req.user.id)) {
-        if (post.downvotes.includes(req.user.id)) {
+      if (!includesUpvotes) {
+        if (includesDownvotes) {
           await post.updateOne({
             $pull: { downvotes: { $in: [req.user.id] } },
           });
@@ -118,12 +126,12 @@ export const handleVotes = asyncHandler(
     }
 
     if (req.body.vote === 0) {
-      if (post.downvotes.includes(req.user.id)) {
+      if (includesDownvotes) {
         await post.updateOne({ $pull: { downvotes: { $in: [req.user.id] } } });
       }
 
-      if (!post.downvotes.includes(req.user.id)) {
-        if (post.upvotes.includes(req.user.id)) {
+      if (!includesDownvotes) {
+        if (includesUpvotes) {
           await post.updateOne({ $pull: { upvotes: { $in: [req.user.id] } } });
         }
         await post.updateOne({ $push: { downvotes: [req.user.id] } });
