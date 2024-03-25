@@ -5,10 +5,10 @@ export interface IPost extends mongoose.Document {
   content: string;
   picture?: string;
   tags: Array<string>;
-  author: mongoose.Schema.Types.ObjectId;
-  upvotes: Array<mongoose.Schema.Types.ObjectId>;
-  downvotes: Array<mongoose.Schema.Types.ObjectId>;
-  comments: Array<mongoose.Schema.Types.ObjectId>;
+  author: Schema.Types.ObjectId;
+  upvotes: Array<Schema.Types.ObjectId>;
+  downvotes: Array<Schema.Types.ObjectId>;
+  comments: Array<Schema.Types.ObjectId>;
   createdAt: Date;
 }
 

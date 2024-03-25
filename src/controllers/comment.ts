@@ -84,3 +84,58 @@ export const deleteCommentByPostAuthor = asyncHandler(
     });
   }
 );
+
+// @desc    handle votes for comment
+// @route   PUT /newsletter/api/v1/comment/vote/:id
+// @access  private
+export const handleVotesForComment = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const comment: IComment | any = await Comment.findById(req.params.id);
+
+    if (!comment) {
+      next(
+        new ErrorResponse(`Comment not found with id of ${req.params.id}`, 404)
+      );
+    }
+
+    const includesUpvotes = comment.upvotes.includes(req.user.id);
+    const includesDownvotes = comment.downvotes.includes(req.user.id);
+
+    if (req.body.vote === 1) {
+      if (includesUpvotes) {
+        await comment.updateOne({ $pull: { upvotes: { $in: [req.user.id] } } });
+      }
+
+      if (!includesUpvotes) {
+        if (includesDownvotes) {
+          await comment.updateOne({
+            $pull: { downvotes: { $in: [req.user.id] } },
+          });
+        }
+        await comment.updateOne({ $push: { upvotes: [req.user.id] } });
+      }
+    }
+
+    if (req.body.vote === 0) {
+      if (includesDownvotes) {
+        await comment.updateOne({
+          $pull: { downvotes: { $in: [req.user.id] } },
+        });
+      }
+
+      if (!includesDownvotes) {
+        if (includesUpvotes) {
+          await comment.updateOne({
+            $pull: { upvotes: { $in: [req.user.id] } },
+          });
+        }
+        await comment.updateOne({ $push: { downvotes: [req.user.id] } });
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      data: comment,
+    });
+  }
+);

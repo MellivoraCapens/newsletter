@@ -2,9 +2,11 @@ import mongoose, { Schema } from "mongoose";
 
 export interface IComment extends mongoose.Document {
   comment: string;
-  author: mongoose.Schema.Types.ObjectId;
-  parentId: mongoose.Schema.Types.ObjectId;
-  comments: Array<mongoose.Schema.Types.ObjectId>;
+  author: Schema.Types.ObjectId;
+  parentId: Schema.Types.ObjectId;
+  comments: Array<Schema.Types.ObjectId>;
+  upvotes: Array<Schema.Types.ObjectId>;
+  downvotes: Array<Schema.Types.ObjectId>;
   createdAt: Date;
 }
 
@@ -22,6 +24,8 @@ const CommentSchema: Schema = new Schema<IComment>({
     ref: "Post",
   },
   comments: [{ type: Schema.Types.ObjectId, ref: "User" }],
+  upvotes: [{ type: Schema.Types.ObjectId, ref: "User" }],
+  downvotes: [{ type: Schema.Types.ObjectId, ref: "User" }],
   createdAt: {
     type: Date,
     default: Date.now,
