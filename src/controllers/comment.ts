@@ -1,10 +1,10 @@
 import { Request, Response, NextFunction } from "express";
 import Comment, { IComment } from "../models/Comment";
-import Post, { IPost } from "../models/Post";
+import Post from "../models/Post";
 import { asyncHandler } from "../middleware/async";
 import { ErrorResponse } from "../utils/errorResponse";
 
-// @desc    create comment
+// @desc    create comment to a post
 // @route   POST /newsletter/api/v1/comment/:id
 // @access  private
 export const createComment = asyncHandler(
@@ -27,6 +27,47 @@ export const createComment = asyncHandler(
         post,
         comment,
       },
+    });
+  }
+);
+
+// @desc    create comment to a comment
+// @route   POST /newsletter/api/v1/comment/comment/:id
+// @access  private
+export const createCommentToComment = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const parentComment: IComment | any = await Comment.findById(req.params.id);
+
+    if (!parentComment) {
+      return next(
+        new ErrorResponse(`Comment not found with id of ${req.params.id}`, 404)
+      );
+    }
+
+    if (parentComment.commentLayerCount >= 4) {
+      return next(
+        new ErrorResponse("No comments can be written under this comment", 403)
+      );
+    }
+
+    const body = {
+      comment: req.body.comment,
+      author: req.user.id,
+      parentId: req.params.id,
+      commentLayerCount: parentComment.commentLayerCount + 1,
+    };
+
+    const comment = await Comment.create(body);
+
+    await parentComment.updateOne({
+      $push: { comments: [comment.id] },
+    });
+
+    res.status(200).json({
+      success: true,
+      data: comment,
+      count: parentComment.commentLayerCount + 1,
+      parent: parentComment,
     });
   }
 );

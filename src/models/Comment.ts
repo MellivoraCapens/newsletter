@@ -4,6 +4,7 @@ export interface IComment extends mongoose.Document {
   comment: string;
   author: Schema.Types.ObjectId;
   parentId: Schema.Types.ObjectId;
+  commentLayerCount: number;
   comments: Array<Schema.Types.ObjectId>;
   upvotes: Array<Schema.Types.ObjectId>;
   downvotes: Array<Schema.Types.ObjectId>;
@@ -22,6 +23,10 @@ const CommentSchema: Schema = new Schema<IComment>({
   parentId: {
     type: Schema.Types.ObjectId,
     ref: "Post",
+  },
+  commentLayerCount: {
+    type: Number,
+    default: 1,
   },
   comments: [{ type: Schema.Types.ObjectId, ref: "User" }],
   upvotes: [{ type: Schema.Types.ObjectId, ref: "User" }],
