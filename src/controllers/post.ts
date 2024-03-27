@@ -1,8 +1,22 @@
 import { Request, Response, NextFunction } from "express";
 import Post, { IPost } from "../models/Post";
-import User from "../models/User";
 import { asyncHandler } from "../middleware/async";
 import { ErrorResponse } from "../utils/errorResponse";
+import {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+  DeleteObjectCommand,
+} from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+
+const s3 = new S3Client({
+  credentials: {
+    accessKeyId: process.env.BUCKET_ACCESS_KEY,
+    secretAccessKey: process.env.BUCKET_SECRET_KEY,
+  },
+  region: process.env.BUCKET_REGION,
+});
 
 // @desc    create post
 // @route   POST /newsletter/api/v1/post/createpost
@@ -15,12 +29,24 @@ export const createPost = asyncHandler(
     const body = {
       title: req.body.title,
       content: req.body.content,
-      picture: req.body.picture,
       tags: req.body.tags,
       author: req.user.id,
     };
 
     const post = await Post.create(body);
+
+    if (req.file) {
+      const params = {
+        Bucket: process.env.BUCKET_NAME,
+        Key: `post/${post.id}`,
+        Body: req.file?.buffer,
+        ContentType: req.file?.mimetype,
+      };
+
+      const comand = new PutObjectCommand(params);
+      await s3.send(comand);
+      await post.updateOne({ image: true });
+    }
 
     res.status(200).json({
       success: true,
@@ -41,9 +67,22 @@ export const getPost = asyncHandler(
         new ErrorResponse(`Post not found with id of ${req.params.id}`, 404)
       );
     }
+
+    let url = "";
+
+    if (post.image) {
+      const params = {
+        Bucket: process.env.BUCKET_NAME,
+        Key: `post/${req.params.id}`,
+      };
+      const command = new GetObjectCommand(params);
+      url = await getSignedUrl(s3, command, { expiresIn: 3600 });
+    }
+
     res.status(200).json({
       success: true,
       data: post,
+      imageUrl: url,
       author: post.author,
     });
   }
@@ -83,6 +122,15 @@ export const deletePost = asyncHandler(
 
     if (!(req.user.id == post.author)) {
       return next(new ErrorResponse("Not autorized to access this route", 401));
+    }
+
+    if (post.image) {
+      const params = {
+        Bucket: process.env.BUCKET_NAME,
+        Key: `post/${req.params.id}`,
+      };
+      const command = new DeleteObjectCommand(params);
+      s3.send(command);
     }
 
     await post.deleteOne();

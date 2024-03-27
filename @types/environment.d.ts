@@ -15,6 +15,10 @@ declare global {
       SMTP_PASSWORD: string;
       FROM_EMAIL: string;
       FROM_NAME: string;
+      BUCKET_NAME: string;
+      BUCKET_REGION: string;
+      BUCKET_ACCESS_KEY: string;
+      BUCKET_SECRET_KEY: string;
     }
   }
 }
