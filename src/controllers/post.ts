@@ -2,21 +2,13 @@ import { Request, Response, NextFunction } from "express";
 import Post, { IPost } from "../models/Post";
 import { asyncHandler } from "../middleware/async";
 import { ErrorResponse } from "../utils/errorResponse";
+import { s3 } from "../config/s3";
 import {
-  S3Client,
   PutObjectCommand,
   GetObjectCommand,
   DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-
-const s3 = new S3Client({
-  credentials: {
-    accessKeyId: process.env.BUCKET_ACCESS_KEY,
-    secretAccessKey: process.env.BUCKET_SECRET_KEY,
-  },
-  region: process.env.BUCKET_REGION,
-});
 
 // @desc    create post
 // @route   POST /newsletter/api/v1/post/createpost

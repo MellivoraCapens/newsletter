@@ -34,7 +34,7 @@ const PostSchema: Schema = new Schema<IPost>({
   },
   upvotes: [{ type: Schema.Types.ObjectId, ref: "User" }],
   downvotes: [{ type: Schema.Types.ObjectId, ref: "User" }],
-  comments: [{ type: Schema.Types.ObjectId, ref: "User" }],
+  comments: [{ type: Schema.Types.ObjectId, ref: "Comment" }],
   createdAt: {
     type: Date,
     default: Date.now,

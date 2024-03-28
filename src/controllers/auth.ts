@@ -4,6 +4,13 @@ import { ErrorResponse } from "../utils/errorResponse";
 import { asyncHandler } from "../middleware/async";
 import { sendTokenResponse } from "../middleware/tokenResponse";
 import * as crypto from "node:crypto";
+import { s3 } from "../config/s3";
+import {
+  GetObjectCommand,
+  PutObjectCommand,
+  DeleteObjectCommand,
+} from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 // @desc    login user
 // @route   POST /newsletter/api/v1/auth/login
@@ -50,15 +57,100 @@ export const register = asyncHandler(
   }
 );
 
+// @desc    add profile picture
+// @route   POST /newsletter/api/v1/auth/profilepicture
+// @access  private
+export const addProfilePicture = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return next(
+        new ErrorResponse(`user not found with id of ${req.user.id}`, 404)
+      );
+    }
+
+    const params = {
+      Bucket: process.env.BUCKET_NAME,
+      Key: `user/${user.id}`,
+      Body: req.file?.buffer,
+      ContentType: req.file?.mimetype,
+    };
+    const comand = new PutObjectCommand(params);
+    await s3.send(comand);
+    await user.updateOne({ profilePicture: true });
+
+    res.status(200).json({
+      success: true,
+      data: user,
+    });
+  }
+);
+
+// @desc    delete profile picture
+// @route   PUT /newsletter/api/v1/auth/deletepicture
+// @access  private
+export const deleteProfilePicture = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return next(
+        new ErrorResponse(`user not found with id of ${req.user.id}`, 404)
+      );
+    }
+
+    const params = {
+      Bucket: process.env.BUCKET_NAME,
+      Key: `user/${req.user.id}`,
+    };
+    const command = new DeleteObjectCommand(params);
+    s3.send(command);
+
+    await user.updateOne({ profilePicture: false });
+
+    res.status(200).json({
+      success: true,
+      data: user,
+    });
+  }
+);
+
 // @desc    get current logged in user
 // @route   GET /newsletter/api/v1/auth/me
 // @access  private
 export const getMe = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
-    const user = await User.findById(req.user._id);
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return next(
+        new ErrorResponse(`user not found with id of ${req.user.id}`, 404)
+      );
+    }
+
+    let url = "";
+
+    if (user.profilePicture) {
+      const params = {
+        Bucket: process.env.BUCKET_NAME,
+        Key: `user/${req.user.id}`,
+      };
+      const command = new GetObjectCommand(params);
+      url = await getSignedUrl(s3, command, { expiresIn: 3600 });
+    } else {
+      const params = {
+        Bucket: process.env.BUCKET_NAME,
+        Key: process.env.DEFAULT_PROFILE_PICTURE,
+      };
+      const command = new GetObjectCommand(params);
+      url = await getSignedUrl(s3, command, { expiresIn: 3600 });
+    }
+
     res.status(200).json({
       success: true,
       data: user,
+      imageUrl: url,
     });
   }
 );

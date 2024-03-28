@@ -28,7 +28,7 @@ const CommentSchema: Schema = new Schema<IComment>({
     type: Number,
     default: 1,
   },
-  comments: [{ type: Schema.Types.ObjectId, ref: "User" }],
+  comments: [{ type: Schema.Types.ObjectId, ref: "Comment" }],
   upvotes: [{ type: Schema.Types.ObjectId, ref: "User" }],
   downvotes: [{ type: Schema.Types.ObjectId, ref: "User" }],
   createdAt: {

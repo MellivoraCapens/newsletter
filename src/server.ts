@@ -1,5 +1,6 @@
 import express from "express";
 import "dotenv/config";
+import cors from "cors";
 import { connectDB } from "./config/db";
 import { errorHandler } from "./middleware/error";
 import users from "./routes/users";
@@ -10,6 +11,7 @@ import comment from "./routes/comment";
 connectDB();
 
 const app: express.Application = express();
+app.use(cors());
 
 const PORT = process.env.PORT;
 

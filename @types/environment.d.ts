@@ -19,6 +19,7 @@ declare global {
       BUCKET_REGION: string;
       BUCKET_ACCESS_KEY: string;
       BUCKET_SECRET_KEY: string;
+      DEFAULT_PROFILE_PICTURE: string;
     }
   }
 }
