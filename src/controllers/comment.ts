@@ -23,10 +23,7 @@ export const createComment = asyncHandler(
 
     res.status(200).json({
       success: true,
-      data: {
-        post,
-        comment,
-      },
+      data: comment,
     });
   }
 );
@@ -66,8 +63,6 @@ export const createCommentToComment = asyncHandler(
     res.status(200).json({
       success: true,
       data: comment,
-      count: parentComment.commentLayerCount + 1,
-      parent: parentComment,
     });
   }
 );

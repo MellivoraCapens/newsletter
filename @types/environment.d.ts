@@ -20,6 +20,8 @@ declare global {
       BUCKET_ACCESS_KEY: string;
       BUCKET_SECRET_KEY: string;
       DEFAULT_PROFILE_PICTURE: string;
+      ATLAS_SEARCH_URL: string;
+      ATLAS_SEARCH_API_KEY: string;
     }
   }
 }

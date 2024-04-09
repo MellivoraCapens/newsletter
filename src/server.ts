@@ -7,6 +7,7 @@ import users from "./routes/users";
 import auth from "./routes/auth";
 import post from "./routes/post";
 import comment from "./routes/comment";
+import search from "./routes/search";
 
 connectDB();
 
@@ -21,6 +22,7 @@ app.use("/newsletter/api/v1/user", users);
 app.use("/newsletter/api/v1/auth", auth);
 app.use("/newsletter/api/v1/post", post);
 app.use("/newsletter/api/v1/comment", comment);
+app.use("/newsletter/api/v1/search", search);
 
 app.use(errorHandler);
 

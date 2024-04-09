@@ -137,7 +137,7 @@ export const getMe = asyncHandler(
         Key: `user/${req.user.id}`,
       };
       const command = new GetObjectCommand(params);
-      url = await getSignedUrl(s3, command, { expiresIn: 3600 });
+      url = await getSignedUrl(s3, command);
     } else {
       const params = {
         Bucket: process.env.BUCKET_NAME,

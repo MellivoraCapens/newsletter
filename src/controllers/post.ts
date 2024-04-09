@@ -52,7 +52,7 @@ export const createPost = asyncHandler(
 // @access  public
 export const getPost = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
-    const post = await Post.findById(req.params.id).populate("author").exec();
+    const post: IPost | any = await Post.findById(req.params.id).populate("author").exec();
 
     if (!post) {
       return next(
@@ -60,7 +60,7 @@ export const getPost = asyncHandler(
       );
     }
 
-    let url = "";
+    let imageUrl= "";
 
     if (post.image) {
       const params = {
@@ -68,14 +68,29 @@ export const getPost = asyncHandler(
         Key: `post/${req.params.id}`,
       };
       const command = new GetObjectCommand(params);
-      url = await getSignedUrl(s3, command, { expiresIn: 3600 });
+      imageUrl = await getSignedUrl(s3, command, { expiresIn: 3600 });
     }
+
+    let params = {
+      Bucket: process.env.BUCKET_NAME,
+      Key: `user/${process.env.DEFAULT_PROFILE_PICTURE}`,
+    };      
+
+    if (post.author.profilePicture) {
+      params = { 
+        Bucket: process.env.BUCKET_NAME,
+        Key: `user/${post.author.id}`
+      };
+    }
+
+    const command = new GetObjectCommand(params);
+    const profilePictureUrl = await getSignedUrl(s3, command, { expiresIn: 3600 });
 
     res.status(200).json({
       success: true,
       data: post,
-      imageUrl: url,
-      author: post.author,
+      imageUrl,
+      profilePictureUrl,
     });
   }
 );
