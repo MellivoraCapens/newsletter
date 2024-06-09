@@ -8,6 +8,7 @@ import {
   updateDetails,
   addProfilePicture,
   deleteProfilePicture,
+  getUserByNickname,
 } from "../controllers/auth";
 import { protect } from "../middleware/auth";
 import multer from "multer";
@@ -26,6 +27,7 @@ router.post(
   addProfilePicture
 );
 router.get("/me", protect, getMe);
+router.get("/user/:nickname", protect, getUserByNickname);
 router.put("/deletepicture", protect, deleteProfilePicture);
 router.put("/resetpassword/:resettoken", resetPassword);
 router.put("/updatedetails", protect, updateDetails);

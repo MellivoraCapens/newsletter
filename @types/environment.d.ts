@@ -19,9 +19,11 @@ declare global {
       BUCKET_REGION: string;
       BUCKET_ACCESS_KEY: string;
       BUCKET_SECRET_KEY: string;
+      BUCKET_URL_EXPIRE: number;
       DEFAULT_PROFILE_PICTURE: string;
       ATLAS_SEARCH_URL: string;
       ATLAS_SEARCH_API_KEY: string;
+      CLIENT_URL: string;
     }
   }
 }

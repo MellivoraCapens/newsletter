@@ -1,6 +1,7 @@
 import express from "express";
 import "dotenv/config";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import { connectDB } from "./config/db";
 import { errorHandler } from "./middleware/error";
 import users from "./routes/users";
@@ -12,7 +13,27 @@ import search from "./routes/search";
 connectDB();
 
 const app: express.Application = express();
-app.use(cors());
+
+const whitelist = [
+  process.env.CLIENT_URL,
+  `${process.env.CLIENT_URL}/home`,
+  `${process.env.CLIENT_URL}/me`,
+  `${process.env.CLIENT_URL}/post/:id`,
+];
+var corsOptions = {
+  credentials: true,
+  origin: function (origin: any, callback: any) {
+    if (whitelist.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+};
+
+app.use(cors(corsOptions));
+/* app.use(cors({ origin: "*" })); */
+app.use(cookieParser());
 
 const PORT = process.env.PORT;
 

@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import User, { IUser, IUserDTO } from "../models/User";
+import User, { IUserDTO } from "../models/User";
 import { ErrorResponse } from "../utils/errorResponse";
 import { asyncHandler } from "../middleware/async";
 import { sendTokenResponse } from "../middleware/tokenResponse";
@@ -11,6 +11,8 @@ import {
   DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import sharp from "sharp";
+import { copyFile } from "node:fs";
 
 // @desc    login user
 // @route   POST /newsletter/api/v1/auth/login
@@ -70,10 +72,14 @@ export const addProfilePicture = asyncHandler(
       );
     }
 
+    const buffer = await sharp(req.file?.buffer)
+      .resize({ width: 200, height: 200, fit: "cover" })
+      .toBuffer();
+
     const params = {
       Bucket: process.env.BUCKET_NAME,
       Key: `user/${user.id}`,
-      Body: req.file?.buffer,
+      Body: buffer,
       ContentType: req.file?.mimetype,
     };
     const comand = new PutObjectCommand(params);
@@ -129,7 +135,7 @@ export const getMe = asyncHandler(
       );
     }
 
-    let url = "";
+    let data: any = { user };
 
     if (user.profilePicture) {
       const params = {
@@ -137,20 +143,15 @@ export const getMe = asyncHandler(
         Key: `user/${req.user.id}`,
       };
       const command = new GetObjectCommand(params);
-      url = await getSignedUrl(s3, command);
-    } else {
-      const params = {
-        Bucket: process.env.BUCKET_NAME,
-        Key: process.env.DEFAULT_PROFILE_PICTURE,
-      };
-      const command = new GetObjectCommand(params);
-      url = await getSignedUrl(s3, command, { expiresIn: 3600 });
+      const url = await getSignedUrl(s3, command, {
+        expiresIn: process.env.BUCKET_URL_EXPIRE,
+      });
+      data = { user, profilePictureUrl: url };
     }
 
     res.status(200).json({
       success: true,
-      data: user,
-      imageUrl: url,
+      data,
     });
   }
 );
@@ -225,5 +226,42 @@ export const updatePassword = asyncHandler(
     await user.save();
 
     sendTokenResponse(user, 200, res);
+  }
+);
+
+// @desc    get user by nickname
+// @route   GET /newsletter/api/v1/auth/user/:nickname
+// @access  private
+export const getUserByNickname = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user: any = await User.findOne({ nickname: req.params.nickname });
+
+    if (!user) {
+      return next(
+        new ErrorResponse(
+          `User not found with nickname of ${req.params.nickname}`,
+          404
+        )
+      );
+    }
+
+    let data: any = { user };
+
+    if (user.profilePicture) {
+      const params = {
+        Bucket: process.env.BUCKET_NAME,
+        Key: `user/${user.id}`,
+      };
+      const command = new GetObjectCommand(params);
+      const url = await getSignedUrl(s3, command, {
+        expiresIn: process.env.BUCKET_URL_EXPIRE,
+      });
+      data = { user, profilePictureUrl: url };
+    }
+
+    res.status(200).json({
+      success: true,
+      data,
+    });
   }
 );

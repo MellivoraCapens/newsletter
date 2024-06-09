@@ -1,8 +1,10 @@
 import mongoose, { Schema } from "mongoose";
+import Post from "./Post";
 
 export interface IComment extends mongoose.Document {
   comment: string;
   author: Schema.Types.ObjectId;
+  postId: Schema.Types.ObjectId;
   parentId: Schema.Types.ObjectId;
   commentLayerCount: number;
   comments: Array<Schema.Types.ObjectId>;
@@ -20,9 +22,12 @@ const CommentSchema: Schema = new Schema<IComment>({
     type: Schema.Types.ObjectId,
     ref: "User",
   },
-  parentId: {
+  postId: {
     type: Schema.Types.ObjectId,
     ref: "Post",
+  },
+  parentId: {
+    type: Schema.Types.ObjectId,
   },
   commentLayerCount: {
     type: Number,

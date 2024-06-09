@@ -1,17 +1,20 @@
 import { Request, Response, NextFunction } from "express";
 import Comment, { IComment } from "../models/Comment";
-import Post from "../models/Post";
+import Post, { IPost } from "../models/Post";
 import { asyncHandler } from "../middleware/async";
 import { ErrorResponse } from "../utils/errorResponse";
+import { ObjectId } from "mongoose";
 
 // @desc    create comment to a post
-// @route   POST /newsletter/api/v1/comment/:id
+// @route   POST /newsletter/api/v1/comment/post/:id
 // @access  private
 export const createComment = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     const body = {
       comment: req.body.comment,
       author: req.user.id,
+      authorNickname: req.user.nickname,
+      postId: req.params.id,
       parentId: req.params.id,
     };
 
@@ -51,6 +54,7 @@ export const createCommentToComment = asyncHandler(
       comment: req.body.comment,
       author: req.user.id,
       parentId: req.params.id,
+      postId: parentComment.postId,
       commentLayerCount: parentComment.commentLayerCount + 1,
     };
 
@@ -86,9 +90,14 @@ export const deleteComment = asyncHandler(
 
     await comment.deleteOne();
 
+    const post = await Post.findByIdAndUpdate(comment.parentId, {
+      $pull: { comments: { $in: [comment.id] } },
+    });
+
     res.status(200).json({
       success: true,
       data: {},
+      post,
     });
   }
 );
@@ -126,10 +135,10 @@ export const deleteCommentByPostAuthor = asyncHandler(
 // @access  private
 export const handleVotesForComment = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
-    const comment: IComment | any = await Comment.findById(req.params.id);
+    const comment: IComment | null = await Comment.findById(req.params.id);
 
     if (!comment) {
-      next(
+      return next(
         new ErrorResponse(`Comment not found with id of ${req.params.id}`, 404)
       );
     }
@@ -168,10 +177,54 @@ export const handleVotesForComment = asyncHandler(
         await comment.updateOne({ $push: { downvotes: [req.user.id] } });
       }
     }
+    const updatedComment: IComment | null = await Comment.findById(
+      req.params.id
+    );
+    let count = 0;
+
+    if (updatedComment) {
+      count = updatedComment.upvotes.length - updatedComment.downvotes.length;
+    }
 
     res.status(200).json({
       success: true,
       data: comment,
+      votesCount: count,
+    });
+  }
+);
+
+// @desc    get comments by parent id
+// @route   GET /newsletter/api/v1/comment/get/:id
+// @access  private
+export const getCommentByParentId = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    let comments = await Comment.find({ parentId: req.params.id }).populate(
+      "author"
+    );
+
+    if (!comments) {
+      return next(
+        new ErrorResponse(`Comment not found with tag of ${req.params.id}`, 404)
+      );
+    }
+    res.status(200).json({
+      success: true,
+      data: comments,
+    });
+  }
+);
+
+// @desc    delete comments from deleted post
+// @route   DELETE /newsletter/api/v1/comment/delete/post/:id
+// @access  private
+export const deleteAllComments = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const comments = await Comment.deleteMany({ postId: req.params.id });
+
+    res.status(200).json({
+      success: true,
+      comments,
     });
   }
 );
